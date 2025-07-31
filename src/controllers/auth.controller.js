@@ -8,22 +8,17 @@ export default {
   REGISTER: async (req, res) => {
     try {
       const newUser = req.body;
-      // Validatsiya
       const { error } = await registerValidator.validateAsync(newUser, { abortEarly: false });
       if (error) throw new ClientError(error.message, 400);
 
-      // Email mavjudligini tekshirish
       const existingUser = await UserModel.findOne({ email: newUser.email });
       if (existingUser) throw new ClientError("Email already exists", 400);
 
-      // Parolni shifrlash
       newUser.password = await HashService.hashPassword(newUser.password);
 
-      // Foydalanuvchini saqlash
       const user = new UserModel(newUser);
       await user.save();
 
-      // JWT token yaratish
       const token = JwtService.generateToken({ id: user._id, email: user.email });
 
       return res.status(201).json({ message: "User registered successfully", token });
@@ -35,19 +30,15 @@ export default {
   LOGIN: async (req, res) => {
     try {
       const { email, password } = req.body;
-      // Validatsiya
       const { error } = await loginValidator.validateAsync({ email, password }, { abortEarly: false });
       if (error) throw new ClientError(error.message, 400);
 
-      // Foydalanuvchini topish
       const user = await UserModel.findOne({ email });
       if (!user) throw new ClientError("Invalid email or password", 401);
 
-      // Parolni tekshirish
       const isMatch = await HashService.comparePasswords(password, user.password);
       if (!isMatch) throw new ClientError("Invalid email or password", 401);
 
-      // JWT token yaratish
       const token = JwtService.generateToken({ id: user._id, email: user.email });
 
       return res.status(200).json({ message: "Login successful", token });
