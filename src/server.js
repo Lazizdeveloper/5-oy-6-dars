@@ -1,0 +1,20 @@
+import express from "express";
+import { serverConfig } from "./config.js";
+import mongoose from "mongoose";
+import { mainRouter } from "./routes/main.routes.js";
+
+const app = express();
+app.use(express.json())
+
+app.use("/api", mainRouter)
+
+async function bootstrap() {
+    try {
+        await mongoose.connect(process.env.dbUri);
+        const {PORT}=serverConfig;
+        app.listen(PORT, ()=> console.log(`Server is running on ${PORT}-port`))
+    } catch (err) {
+        console.log("Database cennection error", err);
+    }
+}
+bootstrap()
